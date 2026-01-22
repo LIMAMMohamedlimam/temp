@@ -1,0 +1,91 @@
+################################################################################
+# TP DEEP LEARNING — TRANSFORMER POUR LA TRADUCTION AUTOMATIQUE
+################################################################################
+#
+# Objectif du TP :
+# Implémenter le script main_train.py permettant d'entraîner un modèle Transformer
+# sur un corpus de traduction (Anglais <-> Allemand) à l'aide de PyTorch.
+#
+# Les étudiants devront écrire main_train.py en s'appuyant sur les modules fournis :
+#
+# ├── dataset.py       : Chargement et tokenisation des données
+# ├── preprocess.py    : Prétraitement initial et sauvegarde des jeux de données
+# ├── trainer.py       : Boucle d'entraînement
+# ├── eval.py          : Évaluation du modèle avec BLEU
+# ├── main_test.py     : Chargement d'un modèle entraîné et test interactif
+#
+#  Données d'entrée :
+# Un fichier .pkl contenant un dictionnaire avec :
+#   - train, valid : datasets torch.utils.data.Dataset
+#   - src_word2idx, tgt_word2idx : dictionnaires de vocabulaire
+#   - src_idx2word, tgt_idx2word : dictionnaires inverses
+#
+# Étapes à suivre dans main_train.py :
+#   1. Argument parser (argparse) avec toutes les options du TP
+#   2. Chargement des données prétraitées avec torch.load
+#   3. Initialisation du modèle Transformer
+#   4. Entraînement via Trainer()
+#   5. Sauvegarde des checkpoints
+#
+# Remarques :
+# - Pensez à gérer le device (CPU/GPU) avec torch.cuda.is_available()
+# - Suivez bien la structure attendue pour permettre les tests et la suite du TP
+#
+# Astuce : vous pouvez consulter le fichier main_test.py comme exemple minimal
+#
+################################################################################
+
+# === 1. IMPORTS REQUIS ===
+# Importer argparse, os, time, torch, les modules locaux (dataset, trainer, etc.)
+# import torch
+# import argparse
+# import time
+# from dataset import collate_fn
+# from trainer import Trainer
+# ...
+
+# === 2. PARSER DES ARGUMENTS ===
+# Créer une fonction `parse_args()` qui définit tous les arguments nécessaires :
+# -data, -epoch, -batch_size, -d_model, -n_head, etc.
+# -log, -save_model, -save_mode, -proj_share_weight, -label_smoothing, etc.
+#
+# Astuce : utilisez `parser.add_argument(..., default=..., type=...)`
+
+# === 3. CHARGEMENT DES DONNÉES ===
+# Charger le fichier .pkl avec torch.load (ne pas oublier `weights_only=False` si besoin)
+# data = torch.load(args.data, weights_only=False)
+# train_loader = torch.utils.data.DataLoader(..., collate_fn=collate_fn)
+
+# === 4. INITIALISATION DU MODÈLE ===
+# Utiliser le vocabulaire (src_vocab_size, tgt_vocab_size) pour créer le modèle
+# - Utiliser les options : d_model, n_layers, n_head, dropout, etc.
+#
+# from transformer.Models import Transformer
+# model = Transformer(...)
+# model = model.to(device)
+
+# === 5. INITIALISATION DE L’ENTRAÎNEUR ===
+# Créer une instance de Trainer avec le modèle et les data loaders
+# trainer = Trainer(model, train_loader, valid_loader, ...) 
+
+# === 6. LANCEMENT DE L’ENTRAÎNEMENT ===
+# Appeler `trainer.train()` dans une boucle d’époques
+#
+# for epoch_i in range(start_epoch, opt.epoch + 1):
+#     trainer.train_epoch(epoch_i)
+#     ...
+
+# === 7. SAUVEGARDE DU MODÈLE ===
+# Utiliser torch.save pour sauvegarder le modèle et son état
+#
+# save_model_path = os.path.join(args.save_model, f'{epoch_i}.chkpt')
+# torch.save(model.state_dict(), save_model_path)
+
+# === 8. LOGGING ===
+# Enregistrer les métriques d’apprentissage dans un fichier log
+# (par exemple : perplexité, BLEU, temps par époque)
+
+# === 9. BONUS : GÉRER L’INTERRUPTION GRACEFULLY ===
+# Utilisez try/except KeyboardInterrupt pour sauvegarder avant de quitter
+
+# Bonne chance ! N'oubliez pas de tester avec un petit nombre d'époques d'abord.
