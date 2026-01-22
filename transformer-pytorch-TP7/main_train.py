@@ -15,7 +15,7 @@ def main():
     # Data & Paths
     parser.add_argument('-data', required=True)
     parser.add_argument('-log', default='logs', help="Path to save logs")
-    parser.add_argument('-save_model', default='trained', help="Path to save checkpoints")
+    parser.add_argument('-save_mode', default='trained', help="Path to save checkpoints")
     
     # Hyperparameters - Training
     parser.add_argument('-epoch', type=int, default=30)
@@ -45,8 +45,8 @@ def main():
     # Création des dossiers de logs et sauvegarde
     if not os.path.exists(args.log):
         os.mkdir(args.log)
-    if not os.path.exists(args.save_model):
-        os.mkdir(args.save_model)
+    if not os.path.exists(args.save_mode):
+        os.mkdir(args.save_mode)
 
     # ========= Loading Dataset ========= #
     # Utilisation de weights_only=False si le fichier data contient des structures personnalisées
