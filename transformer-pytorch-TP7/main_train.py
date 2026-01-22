@@ -12,20 +12,44 @@ from trainer import train
 def main():
     parser = argparse.ArgumentParser(description='main_train.py')
 
+    # Data & Paths
     parser.add_argument('-data', required=True)
+    parser.add_argument('-log', default='logs', help="Path to save logs")
+    parser.add_argument('-save_model', default='trained', help="Path to save checkpoints")
+    
+    # Hyperparameters - Training
     parser.add_argument('-epoch', type=int, default=30)
     parser.add_argument('-batch_size', type=int, default=64)
+    parser.add_argument('-num_workers', type=int, default=2)
 
-    Complétter ici .. 
-    .....
+    # Hyperparameters - Transformer Model
+    parser.add_argument('-d_model', type=int, default=512)
+    parser.add_argument('-d_inner_hid', type=int, default=2048)
+    parser.add_argument('-d_k', type=int, default=64)
+    parser.add_argument('-d_v', type=int, default=64)
+    parser.add_argument('-n_head', type=int, default=8)
+    parser.add_argument('-n_layers', type=int, default=6)
+    parser.add_argument('-dropout', type=float, default=0.1)
+    parser.add_argument('-n_warmup_steps', type=int, default=4000)
+
+    # Sharing weights options
+    parser.add_argument('-embs_share_weight', action='store_true')
+    parser.add_argument('-proj_share_weight', action='store_true')
+    parser.add_argument('-label_smoothing', action='store_true')
+
     parser.add_argument('-no_cuda', action='store_true')
 
     args = parser.parse_args()
     args.cuda = not args.no_cuda
+    
+    # Création des dossiers de logs et sauvegarde
     if not os.path.exists(args.log):
         os.mkdir(args.log)
+    if not os.path.exists(args.save_model):
+        os.mkdir(args.save_model)
 
     # ========= Loading Dataset ========= #
+    # Utilisation de weights_only=False si le fichier data contient des structures personnalisées
     data = torch.load(args.data, weights_only=False)
     args.max_token_seq_len = data['settings'].max_token_seq_len
 
@@ -42,9 +66,20 @@ def main():
     print(args)
 
     device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
+    
     transformer = Transformer(
-        Compléter ici .. 
-        ....
+        args.src_vocab_size,
+        args.tgt_vocab_size,
+        args.max_token_seq_len,
+        tgt_emb_prj_weight_sharing=args.proj_share_weight,
+        emb_src_tgt_weight_sharing=args.embs_share_weight,
+        d_k=args.d_k,
+        d_v=args.d_v,
+        d_model=args.d_model,
+        d_word_vec=args.d_model,
+        d_inner=args.d_inner_hid,
+        n_layers=args.n_layers,
+        n_head=args.n_head,
         dropout=args.dropout).to(device)
 
     args_optimizer = ScheduledOptim(
@@ -53,10 +88,10 @@ def main():
             betas=(0.9, 0.98), eps=1e-09),
         args.d_model, args.n_warmup_steps)
 
-    train(compléter ici ... , args)
+    train(transformer, training_data, validation_data, args_optimizer, device, args)
 
 
-def prepare_dataloaders(???, args):
+def prepare_dataloaders(data, args):
     # ========= Preparing DataLoader =========#
     train_loader = torch.utils.data.DataLoader(
         SeqDataset(
@@ -64,15 +99,23 @@ def prepare_dataloaders(???, args):
             tgt_word2idx=data['dict']['tgt'],
             src_insts=data['train']['src'],
             tgt_insts=data['train']['tgt']),
-        num_workers=??,
-        batch_size=??,
-        collate_fn=??,
-        shuffle=??)
+        num_workers=args.num_workers,
+        batch_size=args.batch_size,
+        collate_fn=paired_collate_fn,
+        shuffle=True)
 
     valid_loader = torch.utils.data.DataLoader(
-        SeqDataset(???),
-        ???)
-    return train_loader, ??
+        SeqDataset(
+            src_word2idx=data['dict']['src'],
+            tgt_word2idx=data['dict']['tgt'],
+            src_insts=data['valid']['src'],
+            tgt_insts=data['valid']['tgt']),
+        num_workers=args.num_workers,
+        batch_size=args.batch_size,
+        collate_fn=paired_collate_fn,
+        shuffle=False)
+        
+    return train_loader, valid_loader
 
 
 if __name__ == '__main__':
